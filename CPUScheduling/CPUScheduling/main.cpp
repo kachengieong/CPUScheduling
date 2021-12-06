@@ -29,7 +29,6 @@ vector<Process> RoundRobin(vector<Process>& process, queue<Process> ready, int n
 	int finishingTime = 0;
 	total = 0;
 	totalSwitching = 0;
-	int remaining = 0;
 	vector<Process> cpu;
 	for (int i = 0; i < process.size(); i++) {
 		ready.push(process[i]);
@@ -39,23 +38,26 @@ vector<Process> RoundRobin(vector<Process>& process, queue<Process> ready, int n
 		ready.pop();
 		if (singleProcess.getRemainingTime() >= timeInterval) {
 			finishingTime = startTime + timeInterval;
-			remaining = singleProcess.getRemainingTime() - timeInterval;
+			int remaining = singleProcess.getRemainingTime() - timeInterval;
+			singleProcess.setRemainingTime(remaining);
 		}
 		else if (singleProcess.getRemainingTime() < timeInterval && singleProcess.getRemainingTime() != 0) {
 			finishingTime = startTime + singleProcess.getRemainingTime();
-			remaining = 0;
+			int remaining = 0;
+			singleProcess.setRemainingTime(remaining);
 		}
 		else if (singleProcess.getCpuTime() >= timeInterval) {
 			finishingTime = startTime + timeInterval;
-			remaining = singleProcess.getCpuTime() - timeInterval;
+			int remaining = singleProcess.getCpuTime() - timeInterval;
+			singleProcess.setRemainingTime(remaining);
 		}
 		else if (singleProcess.getCpuTime() < timeInterval) {
 			finishingTime = startTime + singleProcess.getCpuTime();
-			remaining = 0;
+			int remaining = 0;
+			singleProcess.setRemainingTime(remaining);
 		}
 		singleProcess.setStartTime(startTime);
 		singleProcess.setFinishingTime(finishingTime);
-		singleProcess.setRemainingTime(remaining);
 		if (singleProcess.getRemainingTime() == 0) {
 			singleProcess.calculateTurnaroundTime();
 			singleProcess.calculateWaitingTime();
@@ -84,7 +86,7 @@ int main() {
 	ifstream inData;
 	queue<Process> readyQueue;
 	int number_of_process, process_number, arrival_time, cpu_time;
-	int efficiency, totalWaitingTime = 0, averageWaitingTime;
+	int efficiency, averageWaitingTime;
 	vector<Process>cpu;
 	vector<Process> processVector;
 	int switchTime = 5;
@@ -102,13 +104,13 @@ int main() {
 		Process process = Process(process_number, arrival_time, cpu_time);
 		processVector.push_back(process);
 	}
-
+	int totalWaitingTimeFCFS = 0;
 	cpu = FCFS(processVector, number_of_process, totalTime, switchTime, totalSwitchingTime);
-	for (int j = 0; j < cpu.size(); j++) {
-		totalWaitingTime += cpu[j].getWaitingTime();
+	for (int j = 0; j < processVector.size(); j++) {
+		totalWaitingTimeFCFS += processVector[j].getWaitingTime();
 	}
 
-	averageWaitingTime = totalWaitingTime / number_of_process;
+	averageWaitingTime = totalWaitingTimeFCFS / number_of_process;
 	efficiency = ceil((totalTime / (totalTime + totalSwitchingTime)) * 100);
 	cout << "FCFS: " << endl;
 	cout << "Total Time required is " << totalTime << " time units" << endl;
@@ -118,12 +120,24 @@ int main() {
 		processVector[k].display();
 	}
 	cout << endl;
+	/*int turnaround;
+	int waiting;
+	cpu = RoundRobin(processVector, readyQueue, number_of_process, totalTime, switchTime, totalSwitchingTime, 10);
+	for (int i = 0; i < cpu.size(); i++) {
+		cout << cpu[i].getProcessNum() << " " << cpu[i].getStartTime() << " " << cpu[i].getFinishingTime() << endl;
+	}
+	for (int j = 0; j < processVector.size(); j++) {
+		cout << "Process " << processVector[j].getProcessNum() << endl;
+		cout << "Turnaround Time: " << processVector[j].getturnaroundTime() << endl;
+		cout << "Waiting Time: " << processVector[j].getWaitingTime() << endl;
+	}*/
 	for (int i = 0; i < 3; i++) {
+		int totalWaitingTimeRR = 0;
 		cpu = RoundRobin(processVector, readyQueue, number_of_process, totalTime, switchTime, totalSwitchingTime, timeQuantum[i]);
-		for (int j = 0; j < cpu.size(); j++) {
-			totalWaitingTime += cpu[j].getWaitingTime();
+		for (int j = 0; j < processVector.size(); j++) {
+			totalWaitingTimeRR += processVector[j].getWaitingTime();
 		}
-		averageWaitingTime = totalWaitingTime / number_of_process;
+		averageWaitingTime = totalWaitingTimeRR / number_of_process;
 		efficiency = ceil((totalTime / (totalTime + totalSwitchingTime)) * 100);
 		cout << "Roundrobin (RR) with time quanitum = " << timeQuantum[i] << ": " << endl;
 		cout << "Total Time required is " << totalTime << " time units" << endl;
